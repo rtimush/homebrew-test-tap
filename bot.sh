@@ -52,21 +52,16 @@ uploadBottle() {
     local BOTTLE_REPOSITORY="$(jq -r '.[].bintray.repository' "$BOTTLE_JSON")"
     local BOTTLE_PACKAGE="$(jq -r '.[].bintray.package' "$BOTTLE_JSON")"
     local BOTTLE_VERSION="$(jq -r '.[].formula.pkg_version' "$BOTTLE_JSON")"
-    curl -T "${BOTTLE_LOCAL_FILENAME}" -u "${BINTRAY_USER}:${BINTRAY_KEY}" "https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/${BOTTLE_FILENAME}"
+    [[ $(curl -T "${BOTTLE_LOCAL_FILENAME}" -u "${BINTRAY_USER}:${BINTRAY_KEY}" -o /dev/stderr  -s -w "%{http_code}" \
+              "https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/${BOTTLE_FILENAME}") \
+              -eq 201 ]]
     BINTRAY_PUBLISH_URLS+=("https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/publish")
 }
 
 publishBottles() {
     local url
     for url in "${BINTRAY_PUBLISH_URLS[@]}"; do
-        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" "$url"
-    done
-}
-
-discardBottles() {
-    local url
-    for url in "${BINTRAY_PUBLISH_URLS[@]}"; do
-        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" "$url" -d '{"discard":true}'
+        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" -s "$url"
     done
 }
 
@@ -109,7 +104,7 @@ case "$1" in
                 uploadBottle "$f"
             done
             git merge origin/master -m "Merge updated bottles"
-            git push --atomic origin-writeable HEAD:master HEAD:staging && publishBottles || discardBottles
+            git push --atomic origin-writeable HEAD:master HEAD:staging && publishBottles
         fi
         ;;
 
