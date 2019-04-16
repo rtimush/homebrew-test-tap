@@ -103,11 +103,11 @@ case "$1" in
 
     upload)
         if compgen -G "*.bottle.*" > /dev/null; then
+            setupGit
             brew bottle --write --merge *.bottle.json
             for f in *.bottle.json; do
                 uploadBottle "$f"
             done
-            setupGit
             git merge origin/master -m "Merge updated bottles"
             git push --atomic origin-writeable HEAD:master HEAD:staging && publishBottles || discardBottles
         fi
