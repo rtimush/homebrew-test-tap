@@ -104,7 +104,7 @@ case "$1" in
             git merge origin/master -m "Merge updated bottles"
             git push origin-writeable HEAD:master
             publishBottles
-            git push origin-writeable HEAD:staging
+            git push origin-writeable HEAD:staging || true
         fi
         ;;
 
