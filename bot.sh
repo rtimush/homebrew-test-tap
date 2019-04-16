@@ -63,6 +63,13 @@ publishBottles() {
     done
 }
 
+discardBottles() {
+    local url
+    for url in "${BINTRAY_PUBLISH_URLS[@]}"; do
+        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" "$url" -d '{"discard":"true"}'
+    done
+}
+
 setupGit() {
     echo $GITHUB_DEPLOY_KEY | sed 's/\\n/\
 /g' > github.key
@@ -102,9 +109,7 @@ case "$1" in
             done
             setupGit
             git merge origin/master -m "Merge updated bottles"
-            git push origin-writeable HEAD:master
-            publishBottles
-            git push origin-writeable HEAD:staging || true
+            git push --atomic origin-writeable HEAD:master HEAD:staging && publishBottles || discardBottles
         fi
         ;;
 
