@@ -66,8 +66,11 @@ publishBottles() {
 }
 
 setupGit() {
-    echo $GITHUB_DEPLOY_KEY | sed 's/\\n/\
+    (
+        set +x
+        echo $GITHUB_DEPLOY_KEY | sed 's/\\n/\
 /g' > github.key
+    )
     chmod 0600 github.key
     mkdir -p ~/.ssh
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
