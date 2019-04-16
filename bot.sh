@@ -66,7 +66,7 @@ publishBottles() {
 discardBottles() {
     local url
     for url in "${BINTRAY_PUBLISH_URLS[@]}"; do
-        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" "$url" -d '{"discard":"true"}'
+        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" "$url" -d '{"discard":true}'
     done
 }
 
