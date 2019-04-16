@@ -54,7 +54,7 @@ uploadBottle() {
     local BOTTLE_VERSION="$(jq -r '.[].formula.pkg_version' "$BOTTLE_JSON")"
     [[ $(curl -T "${BOTTLE_LOCAL_FILENAME}" -u "${BINTRAY_USER}:${BINTRAY_KEY}" -o /dev/stderr  -s -w "%{http_code}" \
               "https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/${BOTTLE_FILENAME}") \
-              -eq 201 ]]
+              -eq 201 ]] || return 1
     BINTRAY_PUBLISH_URLS+=("https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/publish")
 }
 
