@@ -9,8 +9,8 @@ class Mytest < Formula
   bottle do
     root_url "https://dl.bintray.com/rtimush/bottles-test-tap"
     cellar :any_skip_relocation
-    sha256 "af7c9826a7ce8f3405d9610259e76a14aa33845c360a0a8f1eb5a403b4753bc3" => :mojave
-    sha256 "1aab0f2a79ae9a3f9369720075e80d9429d39f6eb7916bb28758bd4ca39dda36" => :high_sierra
+    sha256 "ba200855f81279a4574478fe17ff8936bae29ef1f901e5b379344eab327b3752" => :mojave
+    sha256 "5ae360ec5f9c3063462bb49574dcd5651033caa0060d3d3e3a4d029724d9c9dd" => :high_sierra
   end
 
   def install
