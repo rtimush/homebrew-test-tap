@@ -13,11 +13,12 @@ set -euxo pipefail
 #   BINTRAY_USER (optional)              - bintray user name, defaults to BINTRAY_ORG
 #   BINTRAY_KEY                          - bintray API key
 #   GITHUB_DEPLOY_KEY                    - SSH key with (\n can represent a newline, as Azure Pipelines do not support multiline variables)
+#
 
 setupEnvironment() {
     if [[ -n "${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-}" ]]; then
         export GIT_PREVIOUS_COMMIT=$(git rev-list --max-count=1 "origin/$SYSTEM_PULLREQUEST_TARGETBRANCH")
-        export GIT_COMMIT=$(git rev-list --max-count=1 HEAD)
+        export GIT_COMMIT=$(git rev-list --max-count=1 "HEAD^2")
         CI_MODE=--ci-pr
     else
         export GIT_PREVIOUS_COMMIT=$(git rev-list --max-count=1 origin/master)
@@ -99,13 +100,12 @@ case "$1" in
             for f in *.bottle.json; do
                 uploadBottle "$f"
             done
+            setupGit
+            git merge origin/master -m "Merge updated bottles"
+            git push origin-writeable HEAD:master
+            publishBottles
+            git push origin-writeable HEAD:staging
         fi
-        setupGit
-        git merge origin/master -m "Merge updated bottles"
-        git log --graph --oneline --decorate
-        git push origin-writeable HEAD:master
-        publishBottles
-        git push origin-writeable HEAD:staging
         ;;
 
 esac
