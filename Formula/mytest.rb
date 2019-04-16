@@ -15,7 +15,7 @@ class Mytest < Formula
 
   def install
     mkdir "completions"
-    system "sh", "-c", "echo true >completions/tenpureto1"
+    system "sh", "-c", "echo true >completions/tenpureto2"
     bash_completion.install "completions/tenpureto2"
   end
 
