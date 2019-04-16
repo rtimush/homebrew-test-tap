@@ -17,12 +17,12 @@ set -euxo pipefail
 
 setupEnvironment() {
     if [[ -n "${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-}" ]]; then
-        export GIT_PREVIOUS_COMMIT=$(git rev-list --max-count=1 "origin/$SYSTEM_PULLREQUEST_TARGETBRANCH")
-        export GIT_COMMIT=$(git rev-list --max-count=1 "HEAD^2")
+        export GIT_PREVIOUS_COMMIT=$(git rev-parse --verify "origin/$SYSTEM_PULLREQUEST_TARGETBRANCH")
+        export GIT_COMMIT=$(git rev-parse --verify "HEAD^2")
         CI_MODE=--ci-pr
     else
-        export GIT_PREVIOUS_COMMIT=$(git rev-list --max-count=1 origin/master)
-        export GIT_COMMIT=$(git rev-list --max-count=1 HEAD)
+        export GIT_PREVIOUS_COMMIT=$(git rev-parse --verify origin/master)
+        export GIT_COMMIT=$(git rev-parse --verify HEAD)
         CI_MODE=--ci-testing
     fi
     export HOMEBREW_NO_ANALYTICS=1
