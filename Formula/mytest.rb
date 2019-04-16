@@ -4,7 +4,7 @@ class Mytest < Formula
 
   url "https://github.com/rtimush/tenpureto/archive/v0.1.1.tar.gz"
   sha256 "e18349cf8db2293b453a091ea30755b5d7996b09baadb7a57ca0253e302d95eb"
-  revision 5
+  revision 6
 
   bottle do
     root_url "https://dl.bintray.com/rtimush/bottles-test-tap"
@@ -16,7 +16,7 @@ class Mytest < Formula
   def install
     mkdir "completions"
     system "sh", "-c", "echo true >completions/tenpureto1"
-    bash_completion.install "completions/tenpureto1"
+    bash_completion.install "completions/tenpureto2"
   end
 
   test do
