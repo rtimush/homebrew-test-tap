@@ -4,10 +4,9 @@ set -euxo pipefail
 
 #
 # Required environment variables:
-#   BUILD_REPOSITORY_ID                  - org/repo
-#   SYSTEM_PULLREQUEST_PULLREQUESTNUMBER - pull request number, defined for PR builds only
-#   SYSTEM_PULLREQUEST_TARGETBRANCH      - pull request target branch, defined for PR builds only
-#   BUILD_ARTIFACTSTAGINGDIRECTORY       - directory to copy bottles to
+#   TRAVIS_REPO_SLUG                     - org/repo
+#   TRAVIS_PULL_REQUEST                  - pull request number, defined for PR builds only
+#   TRAVIS_BRANCH                        - pull request target branch, defined for PR builds only
 #   BINTRAY_ORG (optional)               - bintray organization name, defaults to git organization name
 #   BINTRAY_REPO (optional)              - bintray repository name, defaults to bottles-${TAP_SHORT_NAME}
 #   BINTRAY_USER (optional)              - bintray user name, defaults to BINTRAY_ORG
@@ -16,8 +15,8 @@ set -euxo pipefail
 #
 
 setupEnvironment() {
-    if [[ -n "${SYSTEM_PULLREQUEST_PULLREQUESTNUMBER:-}" ]]; then
-        export GIT_PREVIOUS_COMMIT=$(git rev-parse --verify "origin/$SYSTEM_PULLREQUEST_TARGETBRANCH")
+    if [[ -n "${TRAVIS_PULL_REQUEST:-}" ]]; then
+        export GIT_PREVIOUS_COMMIT=$(git rev-parse --verify "origin/$TRAVIS_BRANCH")
         export GIT_COMMIT=$(git rev-parse --verify "HEAD^2")
         CI_MODE=--ci-pr
     else
@@ -26,24 +25,26 @@ setupEnvironment() {
         CI_MODE=--ci-testing
     fi
     export HOMEBREW_NO_ANALYTICS=1
-    export HOMEBREW_NO_AUTO_UPDATE=1
-    REPO_NAME="${BUILD_REPOSITORY_ID#*/}"
-    ORG_NAME="${BUILD_REPOSITORY_ID%/*}"
+    REPO_NAME="${TRAVIS_REPO_SLUG#*/}"
+    ORG_NAME="${TRAVIS_REPO_SLUG%/*}"
     TAP_SHORT_NAME="${REPO_NAME#homebrew-}"
     TAP_NAME="$ORG_NAME/$TAP_SHORT_NAME"
     BINTRAY_ORG="${BINTRAY_ORG:-${ORG_NAME}}"
     BINTRAY_REPO="${BINTRAY_REPO:-bottles-${TAP_SHORT_NAME}}"
     BINTRAY_USER="${BINTRAY_USER:-${BINTRAY_ORG}}"
     unset TF_BUILD
+    # https://github.com/Homebrew/brew/issues/5561
+    rm -rf /usr/local/Homebrew/Library/Homebrew/vendor/bundle/ruby/2.3.0/
+    brew vendor-install ruby
+
+    brew update
 }
 
 setupTap() {
-    local tap="$(brew --repo)/Library/Taps/$BUILD_REPOSITORY_ID"
+    local tap="$(brew --repo)/Library/Taps/$TRAVIS_REPO_SLUG"
     mkdir -p "$(dirname "$tap")"
     sudo ln -s "$PWD" "$tap"
 }
-
-BINTRAY_PUBLISH_URLS=()
 
 uploadBottle() {
     local BOTTLE_JSON="$1"
@@ -52,17 +53,7 @@ uploadBottle() {
     local BOTTLE_REPOSITORY="$(jq -r '.[].bintray.repository' "$BOTTLE_JSON")"
     local BOTTLE_PACKAGE="$(jq -r '.[].bintray.package' "$BOTTLE_JSON")"
     local BOTTLE_VERSION="$(jq -r '.[].formula.pkg_version' "$BOTTLE_JSON")"
-    [[ $(curl -T "${BOTTLE_LOCAL_FILENAME}" -u "${BINTRAY_USER}:${BINTRAY_KEY}" -o /dev/stderr  -s -w "%{http_code}" \
-              "https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/${BOTTLE_FILENAME}") \
-              -eq 201 ]] || return 1
-    BINTRAY_PUBLISH_URLS+=("https://api.bintray.com/content/${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}/publish")
-}
-
-publishBottles() {
-    local url
-    for url in "${BINTRAY_PUBLISH_URLS[@]}"; do
-        curl -X POST -u "${BINTRAY_USER}:${BINTRAY_KEY}" -s "$url"
-    done
+    jfrog bt upload "${BOTTLE_LOCAL_FILENAME}" "${BINTRAY_ORG}/${BOTTLE_REPOSITORY}/${BOTTLE_PACKAGE}/${BOTTLE_VERSION}"
 }
 
 setupGit() {
@@ -74,7 +65,7 @@ setupGit() {
     chmod 0600 github.key
     mkdir -p ~/.ssh
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-    git remote add origin-writeable "git@github.com:$BUILD_REPOSITORY_ID.git"
+    git remote add origin-writeable "git@github.com:$TRAVIS_REPO_SLUG.git"
     git config core.sshCommand "ssh -i github.key"
     git config user.name "BrewTestBot"
     git config user.email "homebrew-test-bot@lists.sfconservancy.org"
@@ -84,18 +75,20 @@ setupEnvironment
 setupTap
 
 case "$1" in
-    test)
-        sudo xcode-select --switch /Applications/Xcode_10.1.app/Contents/Developer
+    build)
         brew test-bot --bintray-org="$BINTRAY_ORG" \
-            --root-url=https://dl.bintray.com/$BINTRAY_ORG/$BINTRAY_REPO \
-            --tap=rtimush/test-tap \
+            --root-url="https://dl.bintray.com/$BINTRAY_ORG/$BINTRAY_REPO" \
+            --tap="$TAP_NAME" \
             --verbose \
             --no-pull \
             --junit \
             $CI_MODE
-
-        if compgen -G "*.bottle.*" > /dev/null; then
-            mv *.bottle.* "$BUILD_ARTIFACTSTAGINGDIRECTORY/"
+        if [[ -z "${TRAVIS_PULL_REQUEST:-}" ]]; then
+            if compgen -G "*.bottle.*" > /dev/null; then
+                for f in *.bottle.json; do
+                    uploadBottle "$f"
+                done
+            fi
         fi
         ;;
 

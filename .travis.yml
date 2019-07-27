@@ -1,0 +1,42 @@
+language: minimal
+os: osx
+
+if: branch in (master, staging) OR type = pull_request
+
+git:
+  depth: false
+
+addons:
+  homebrew:
+    packages:
+    - jfrog-cli-go
+    - jq
+
+cache:
+  directories:
+    - /usr/local/Homebrew/Library/Homebrew/vendor/bundle
+
+before_install:
+  - softwareupdate --install -a
+
+env:
+  global:
+    # BINTRAY_KEY
+    - secure: "QlEp+tfX+lglD/tEq9ifKZMGWnz6XFBO8fPwC5z+1niR8N+wxDVbYCKmQX6/4i7lv8Hd6i1i+Ca/w4ip5VnC82SY9tG0G/qGV7Tmhq0CzcV5pFwMBHJVxVNQYoQpcaxQeGzfonCb+KXGk2EvqGj65BJ/tTWItt/fu+ELOLxf6DF7G1R2JUfi6nvHGoyFfQNVTQopqPEphurS/fMS8O7Kkj6WtCaInRc/1FW4qj+dqgVKNJ/wVLUXjI+t2hMgwOp9AmadCHc+5eqRQJFjQB2f2dlkuIEQETc/9BgdlFEwIbGOhrgkpAdeH6VHXvzUrKaVXyF1HvQiaU2YBO7fDmuYPYzQhqNnAWwQwBslwBcuCCoqm9A0u+B4YpBYi7kSTOl7k/cQEByFGGOVzpVgdDbm3Tqxw8S/DFYZSode+IQwkqCNRRRZtLF82s0tluws1F6LtvW5Ip4nbgS9EdFFXcUSWaut+kyo17u7Oro0B7e/l4i7hX1xPctLL/i4gAqQc58efZU/u6oL6Zg8Ye8h18GzXJr1Q3k1z9H2rYue2AXFqmYG+Mz2tkGjgQsSxwx9cHFi36wV2XGzXoL8flXwIV6/oNGqvMa4rzAm6wL3LJE2NGHw9xhtbtGrkvypfMK0dPjAmkKoXRoOPvC+qwzuzc7xdFFCOSnUTjGmdz3MaCvBwE4="
+
+stages:
+  - build
+  # - publish
+
+jobs:
+  include:
+    - stage: build
+      env: OSX=10.14
+      osx_image: xcode11
+      script: ./bot.sh build
+    - env: OSX=10.13
+      osx_image: xcode10.1
+      script: ./bot.sh build
+    - env: OSX=10.12
+      osx_image: xcode9.2
+      script: ./bot.sh build
