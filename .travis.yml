@@ -1,0 +1,43 @@
+language: minimal
+os: osx
+
+if: branch in (master, staging) OR type = pull_request
+
+git:
+  depth: false
+
+cache:
+  directories:
+    - /usr/local/Homebrew/Library/Homebrew/vendor/bundle
+
+env:
+  global:
+    # BINTRAY_KEY
+    - secure: "N0JEs+8YFh+nOyxA06gWioO7NTw3oSPrlKEz6EWw/9P9ze6jVeSIJNN+tH6muyZOhUbC0U0hWET/4GrFReQ08FNOR6XZwFEBSwSKtJkg77FQmKKl8leowVsxYYFY/rclrV9N6sVVUT3gdYlmmufIAKL38kmODxisxto2pzh/s3q1XG6+HCmDTUGQPt+RsibySeOKNYnnj5Vwkh+1CEDJBnJC2lxunpVjWkGHovkM8KWxfsVDHfrDTKqRDscos6DNZisnNjLpeTgSdKxlWuX2WyYXCx0ucEGahUhFl89UwJMq4pWpFMxgsOYXy8cl6QsAKhSURaU7nI0+FHdbSrC3TY48oPROnWicKTH+gTJ41d6/NwKrmQe2Lts+lTDB/oyEi3p5XkDWP9t/p6Ub0cCaYlw49gn1h7M3JI4TSn4ZQ7hWjTqpENNf6vMtwfDvlu+0n+jPjAW31zyeWWK+3zNhNBfUD81IR3p70p3gPg6iCo70tOKuEFC3EzKYytgnslQBzoXNXVY5iFuTElKPU2tTnTxl8x5bGCMvtKJByTMdAZ4nA3cPl3FGS20+MftBg+HIUN1XaVH3H7TKFpbG7MMVAtlF5ui4Ap0lGtQhhjdxgXhHMRrqpX92440cwre10SwoUjkniDyVAtqg/MtDLdnvYGn3tYzbqYZvtSyWmke4Xok="
+
+before_install:
+  - softwareupdate --install -a
+
+stages:
+  - build
+  # - publish
+
+jobs:
+  include:
+    - stage: build
+      env: OSX=10.14
+      osx_image: xcode11
+      script: ./bot.sh build
+    - env: OSX=10.13
+      osx_image: xcode10.1
+      script: ./bot.sh build
+    - env: OSX=10.12
+      osx_image: xcode9.2
+      script: ./bot.sh build
+    - stage: publish
+      before_install:
+        - mkdir -p ~/.ssh
+        - openssl aes-256-cbc -K $encrypted_8fadb421607b_key -iv $encrypted_8fadb421607b_iv -in homebrew-test-tap.enc -out ~/.ssh/homebrew-test-tap -d
+        - chmod 600 ~/.ssh/homebrew-test-tap
+      env: GITHUB_DEPLOY_KEY=~/.ssh/homebrew-test-tap
+      script: ./bot.sh upload
