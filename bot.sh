@@ -95,6 +95,10 @@ setupEnvironment
 setupTap
 
 case "$1" in
+    update-xcode)
+        softwareupdate --install --all --verbose --product-types "Developer Tools"
+        ;;
+
     build)
         brew update >/dev/null
         brew test-bot --bintray-org="$BINTRAY_ORG" \

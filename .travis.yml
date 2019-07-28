@@ -25,18 +25,15 @@ jobs:
     - stage: build
       env: OSX=10.14
       osx_image: xcode11
-      before_install:
-        - softwareupdate --install --all --verbose
+      before_install: ./bot.sh update-xcode
       script: ./bot.sh build
     - env: OSX=10.13
       osx_image: xcode10.1
-      before_install:
-        - softwareupdate --install --all --verbose
+      before_install: ./bot.sh update-xcode
       script: ./bot.sh build
     - env: OSX=10.12
       osx_image: xcode9.2
-      before_install:
-        - softwareupdate --install --all --verbose
+      before_install: ./bot.sh update-xcode
       script: ./bot.sh build
     - stage: publish
       osx_image: xcode11
