@@ -4,7 +4,7 @@ class Mytest < Formula
 
   url "https://github.com/rtimush/tenpureto/archive/v0.1.2.tar.gz"
   sha256 "6c2cdf03c88cc012fb75a5c937fabd3b739cecccbd99e883375516e8dea2ea12"
-  revision 2
+  revision 3
 
   bottle do
     root_url "https://dl.bintray.com/rtimush/bottles-test-tap"

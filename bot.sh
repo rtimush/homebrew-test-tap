@@ -26,6 +26,8 @@ setupEnvironment() {
         CI_MODE=--ci-testing
     fi
     export HOMEBREW_NO_ANALYTICS=1
+    export HOMEBREW_NO_AUTO_UPDATE=1
+    export HOMEBREW_NO_INSTALL_CLEANUP=1
     REPO_NAME="${TRAVIS_REPO_SLUG#*/}"
     ORG_NAME="${TRAVIS_REPO_SLUG%/*}"
     TAP_SHORT_NAME="${REPO_NAME#homebrew-}"
@@ -94,7 +96,7 @@ setupTap
 
 case "$1" in
     build)
-        brew update
+        brew update >/dev/null
         brew test-bot --bintray-org="$BINTRAY_ORG" \
             --root-url="https://dl.bintray.com/$BINTRAY_ORG/$BINTRAY_REPO" \
             --tap="$TAP_NAME" \
