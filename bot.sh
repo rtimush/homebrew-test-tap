@@ -76,7 +76,7 @@ uploadBottle() {
 publishBottles() {
     local pkg
     for pkg in "${BINTRAY_PUBLISH_PACKAGES[@]}"; do
-        jfrog bt version-publish --user "${BINTRAY_USER}" --key "${BINTRAY_KEY}" "${BOTTLE_LOCAL_FILENAME}" "$pkg"
+        jfrog bt version-publish --user "${BINTRAY_USER}" --key "${BINTRAY_KEY}" "$pkg"
     done
 }
 
